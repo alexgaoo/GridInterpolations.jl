@@ -51,7 +51,7 @@ julia> interpolate(sGrid,gridData,x)
 Or interpolate on the nearest neighbor grid:
 ```julia
 julia> interpolate(nGrid,gridData,x)
-2.0
+1.0 
 ```
 
 Compute interpolants for the rectangular, simplex, and nearest neighbor grids:
