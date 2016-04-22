@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/sisl/GridInterpolations.jl.svg?branch=master)](https://travis-ci.org/sisl/GridInterpolations.jl)
 [![Coverage Status](https://coveralls.io/repos/sisl/GridInterpolations.jl/badge.svg)](https://coveralls.io/r/sisl/GridInterpolations.jl)
 
-This package performs multivariate interpolation on a rectilinear grid. At the moment, it provides implementations of multilinear and simplex interpolation.
+This package performs multivariate interpolation on a rectilinear grid. At the moment, it provides implementations of multilinear, simplex, and nearest neighbor interpolation.
 
 For a description of multilinear and simplex interpolation see: Scott Davies, _Multidimensional Triangulation and Interpolation for Reinforcement Learning_, Advances in Neural Information Processing Systems, Cambridge, MA: MIT Press, 1997. [pdf](http://papers.nips.cc/paper/1229-multidimensional-triangulation-and-interpolation-for-reinforcement-learning.pdf)
 
@@ -31,6 +31,7 @@ Create two-dimensional rectangular and simplex interpolation grids, a data array
 ```julia
 grid = RectangleGrid([0., 0.5, 1.],[0., 0.5, 1.])  	# rectangular grid
 sGrid = SimplexGrid([0., 0.5, 1.],[0., 0.5, 1.])	# simplex grid
+nGrid = NearestGrid([0., 0.5, 1.],[0., 0.5, 1.])   	# nearest neighbor grid 
 gridData = [8., 1., 6., 3., 5., 7., 4., 9., 2.]   	# vector of value data at each cut
 x = [0.25, 0.75]  									# point at which to perform interpolation
 ```
@@ -47,7 +48,13 @@ julia> interpolate(sGrid,gridData,x)
 6.0
 ```
 
-Compute interpolants for the rectangular and simplex grids:
+Or interpolate on the nearest neighbor grid:
+```julia
+julia> interpolate(nGrid,gridData,x)
+2.0
+```
+
+Compute interpolants for the rectangular, simplex, and nearest neighbor grids:
 ```julia
 julia> sGrid = SimplexGrid([0., 0.5, 1.],[0., 0.5, 1.])
 [[0.0,0.5,1.0],[0.0,0.5,1.0]]
@@ -78,4 +85,4 @@ julia> dimensions(grid)
 
 ## Credits
 
-Contributors to this package include Maxim Egorov, Eric Mueller, and Mykel Kochenderfer.
+Contributors to this package include Maxim Egorov, Eric Mueller, Alex Gao, and Mykel Kochenderfer.

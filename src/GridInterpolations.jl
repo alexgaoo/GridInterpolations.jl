@@ -1,6 +1,7 @@
 module GridInterpolations
 
-export AbstractGrid, RectangleGrid, SimplexGrid, dimensions, length, ind2x, ind2x!, interpolate, maskedInterpolate, interpolants
+export AbstractGrid, RectangleGrid, SimplexGrid, NearestGrid, dimensions, length, ind2x, ind2x!, interpolate, maskedInterpolate, interpolants
+
 
 abstract AbstractGrid
 
@@ -62,13 +63,39 @@ type SimplexGrid <: AbstractGrid
     end
 end
 
+type NearestGrid <: AbstractGrid
+    cutPoints::Vector{Vector{Float64}}
+    cut_counts::Vector{Int}
+    cuts::Vector{Float64}
+    index::Vector{Int}
+    weight::Vector{Float64}
+    
+    function NearestGrid(cutPoints...) 
+        cut_counts = Int[length(cutPoints[i]) for i = 1:length(cutPoints)]
+        cuts = vcat(cutPoints...)
+        myCutPoints = Array(Vector{Float64}, length(cutPoints))
+        for i = 1:length(cutPoints)
+            myCutPoints[i] = cutPoints[i]
+        end
+        numDims = length(cutPoints)
+        weight = 1
+        pointDist = zeros(Float64, length(cutPoints), 2)
+        dist_i = zeros(Float64, length(cutPoints)) 
+        new(myCutPoints, cut_counts, cuts, index, weight, pointDist, dist_i)
+    end
+end
+
 Base.length(grid::RectangleGrid) = prod(grid.cut_counts)
 
 Base.length(grid::SimplexGrid) = prod(grid.cut_counts)
+        
+Base.length(grid::NearestGrid) = prod(grid.cut_counts)
 
-dimensions(grid::RectangleGrid) = length(grid.cut_counts)
+dimensions(grid::RectangleGrid) = length(grid.cut_counts)mkk
 
 dimensions(grid::SimplexGrid) = length(grid.cut_counts)
+        
+dimensions(grid::NearestGrid) = length(grid.cut_counts)
 
 Base.showcompact(io::IO, grid::AbstractGrid) = print(io, "$(typeof(grid)) with $(length(grid)) points")
 Base.show(io::IO, grid::AbstractGrid) = Base.showcompact(io, grid)
@@ -147,7 +174,7 @@ function interpolants(grid::RectangleGrid, x::Vector)
     subblock_size = 1
     cut_i = 1
     n = 1
-    for d = 1:length(x)
+    for d = 1:length(x) 
         coord = x[d]
         lasti = cut_counts[d]+cut_i-1
         ii = cut_i
@@ -168,7 +195,7 @@ function interpolants(grid::RectangleGrid, x::Vector)
         end
 
         if i_lo == i_hi
-            for i = 1:l
+            for i = 1:lf
                 grid.index[i] += (i_lo - cut_i)*subblock_size
             end
         else
@@ -293,6 +320,36 @@ function interpolants(grid::SimplexGrid, x::Vector)
     weight = weight ./ sum(weight)
 
     return index::Vector{Int}, weight::Vector{Float64}
+end
+
+function interpolants(grid::NearestGrid, data::Matrix, x::Vector)
+    weight = grid.weight
+    index = zeros(length(x))
+    
+    cutPoints = grid.cutPoints
+    numDims = grid.numDims
+    pointDist = grid.pointDist
+    dist_i = grid.dist_i
+    
+    num = collect(1:length(cutPoints))
+    
+    for d = 1:length(x)
+        coord = x[d]
+        for i = 1:length(cutPoints)
+            #takes euclidean distance
+            dist_i[i] = norm(coord-cutPoints[i]) 
+        end
+
+        pointDist = [dist_i data num]
+        #if there are ties, take the cutpoint with the lowest data value 
+        sortrows(pointDist, by=x->(x[1], x[2], x[3]))
+        index[d] = pointDist[3]
+    end
+    
+    weight = grid.weight
+        
+    return grid.index::Vector{Int}, grid.weight::Vector{Float64}
+      
 end
 
 #################### sortperm! is included in Julia v0.4 ###################
